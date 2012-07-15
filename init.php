@@ -1,22 +1,36 @@
 <?
-//define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"]."/log.txt");
-//AddMessage2Log("");
+/*
+* реализация связи "один-ко-многим"
+* https://github.com/asvavilov/bitrix-relations/
+* TODO:
+* - можно сделать универсальней, чтобы другие отношения поддерживались
+*/
 
+// регистрируем обработчики событий
 AddEventHandler("iblock", "OnAfterIBlockElementAdd", array("MyRelations", "OnAfterIBlockElementAddHandler"));
 AddEventHandler("iblock", "OnAfterIBlockElementUpdate", array("MyRelations", "OnAfterIBlockElementUpdateHandler"));
 AddEventHandler("iblock", "OnAfterIBlockElementDelete", array("MyRelations", "OnAfterIBlockElementDeleteHandler"));
 
 CModule::IncludeModule("iblock");
 
-// реализация связи "один-ко-многим"
-// можно сделать универсальней, чтобы другие отношения поддерживались
+/**
+* bitrix-relations
+*/
 class MyRelations
 {
+
+	/**
+	* Возвращает инфоблок по идентикатору
+	*/
 	function getRelatedIBlock($iblock_id)
 	{
 		$res = CIBlock::GetByID($iblock_id);
 		return $res->GetNext();
 	}
+
+	/**
+	* Сохраняет группу
+	*/
 	function save_group($arFields, $iblock)
 	{
 		$res = CIBlockProperty::GetList(array(), array("IBLOCK_ID"=>$iblock["ID"], "CODE"=>"PRODUCTS"));
@@ -46,6 +60,10 @@ class MyRelations
 			}
 		}
 	}
+
+	/**
+	* Сбрасывает продукты для группы
+	*/
 	function resetProductsGroup($group_id, $product_ids = array())
 	{
 		if (!$group_id) return ;
@@ -57,6 +75,10 @@ class MyRelations
 			CIBlockElement::SetPropertyValuesEx($prev_product["ID"], false, array("GROUP" => null));
 		}
 	}
+
+	/**
+	* Сохраняет продукт
+	*/
 	function save_product($arFields, $iblock)
 	{
 		$res = CIBlockProperty::GetList(array(), array("IBLOCK_ID"=>$iblock["ID"], "CODE"=>"GROUP"));
@@ -94,6 +116,10 @@ class MyRelations
 			}
 		}
 	}
+
+	/**
+	* Сбрасывает группу для продукта
+	*/
 	function resetGroupProduct($product_id, $group_ids = array())
 	{
 		if (!$product_id) return ;
@@ -115,6 +141,10 @@ class MyRelations
 			CIBlockElement::SetPropertyValuesEx($fields["ID"], false, array("PRODUCTS" => $prop_products));
 		}
 	}
+
+	/**
+	* Обработчик события OnAfterIBlockElementAdd
+	*/
 	function OnAfterIBlockElementAddHandler(&$arFields)
 	{
 		if (!$arFields["RESULT"]) return ;
@@ -130,6 +160,10 @@ class MyRelations
 				break;
 		}
 	}
+
+	/**
+	* Обработчик события OnAfterIBlockElementUpdate
+	*/
 	function OnAfterIBlockElementUpdateHandler(&$arFields)
 	{
 		if (!$arFields["RESULT"]) return ;
@@ -145,6 +179,10 @@ class MyRelations
 				break;
 		}
 	}
+
+	/**
+	* Обработчик события OnAfterIBlockElementDelete
+	*/
 	function OnAfterIBlockElementDeleteHandler($element)
 	{
 		$iblock = self::getRelatedIBlock($element["IBLOCK_ID"]);
@@ -159,5 +197,6 @@ class MyRelations
 				break;
 		}
 	}
+
 }
 ?>
