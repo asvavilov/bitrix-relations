@@ -89,8 +89,10 @@ class MyRelations
 		$group_ids = array();
 		if ($res)
 		{
+			if (!is_array($res)) $res = array(array("VALUE" => $res));
 			foreach ($res as $row)
 			{
+				if (!is_array($row)) $row = array("VALUE" => $row);
 				if (!$row["VALUE"]) continue;
 				$group_ids[$row["VALUE"]] = $row["VALUE"];
 			}
